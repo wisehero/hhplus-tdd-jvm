@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class UserPointTest {
 
@@ -35,12 +37,12 @@ class UserPointTest {
 			.hasMessage("최대 포인트 한도는 %d 입니다. 입력값: %d".formatted(MAX_CHARGE_POINT, chargePoint));
 	}
 
-	@Test
-	@DisplayName("만약 충전 포인트가 음수라면, 예외가 발생한다.")
-	void ifChargePointUnderZero() {
+	@ParameterizedTest
+	@ValueSource(longs = {0, -1})
+	@DisplayName("만약 충전 포인트가 0이거나 음수라면, 예외가 발생한다.")
+	void ifChargePointUnderZero(long chargePoint) {
 		// given
 		UserPoint userPoint = UserPoint.empty(1L);
-		long chargePoint = -1;
 
 		// when then
 		assertThatThrownBy(() -> userPoint.charge(chargePoint))
@@ -48,12 +50,12 @@ class UserPointTest {
 			.hasMessage("충전할 포인트는 0 보다 커야 합니다. 입력값: %d".formatted(chargePoint));
 	}
 
-	@Test
+	@ParameterizedTest
+	@ValueSource(longs = {10_000, 20_000})
 	@DisplayName("사용자 포인트는 최대 사용 가능 포인트 내에서 사용할 수 있다.")
-	void useUserPoint() {
+	void useUserPoint(long usePoint) {
 		// given
 		UserPoint userPoint = new UserPoint(1L, 20_000, System.currentTimeMillis());
-		long usePoint = 10_000;
 
 		// when
 		UserPoint usedPoint = userPoint.use(usePoint);
@@ -62,12 +64,12 @@ class UserPointTest {
 		assertThat(usedPoint.point()).isEqualTo(10_000);
 	}
 
-	@Test
-	@DisplayName("만약 사용하고자 하는 포인트가 음수라면, 예외가 발생한다.")
-	void ifUsePointUnderZero() {
+	@ParameterizedTest
+	@ValueSource(longs = {0, -1})
+	@DisplayName("만약 사용하고자 하는 포인트 0이거나 음수라면, 예외가 발생한다.")
+	void ifUsePointUnderZero(long usePoint) {
 		// given
 		UserPoint userPoint = new UserPoint(1L, 20_000, System.currentTimeMillis());
-		long usePoint = -1;
 
 		// when then
 		assertThatThrownBy(() -> userPoint.use(usePoint))

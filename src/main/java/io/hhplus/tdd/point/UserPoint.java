@@ -15,7 +15,7 @@ public record UserPoint(
 
 	public UserPoint {
 		if (point < 0) {
-			throw new IllegalArgumentException("포인트는 0 보다 커야 합니다. 입력값: %d".formatted(point));
+			throw new IllegalArgumentException("포인트는 0 보다 같거나 커야 합니다. 입력값: %d".formatted(point));
 		}
 		if (point > MAX_CHARGE_POINT) {
 			throw new IllegalArgumentException("포인트 최대 한도는 %d 입니다. 입력값: %d".formatted(MAX_CHARGE_POINT, point));
@@ -23,7 +23,7 @@ public record UserPoint(
 	}
 
 	public UserPoint charge(long chargePoint) {
-		if (chargePoint < 0) {
+		if (chargePoint <= 0) {
 			throw new IllegalArgumentException("충전할 포인트는 0 보다 커야 합니다. 입력값: %d".formatted(chargePoint));
 		}
 		long newPoint = point + chargePoint;
@@ -37,7 +37,7 @@ public record UserPoint(
 	}
 
 	public UserPoint use(long usePoint) {
-		if (usePoint < 0) {
+		if (usePoint <= 0) {
 			throw new IllegalArgumentException("사용할 포인트는 0 보다 커야 합니다. 입력값: %d".formatted(usePoint));
 		}
 
