@@ -34,7 +34,7 @@ public class PointServiceConcurrencyTest {
 
 	@Test
 	@DisplayName("0 포인트를 가진 사용자를 대상으로 100 포인트를 충전하는 요청이 20개 동시에 들어오면 포인트는 2_000이 되고 이력도 20개가 남는다.")
-	public void chargePointConcurrencyTest() throws InterruptedException {
+	void chargePointConcurrencyTest() throws InterruptedException {
 
 		// given
 		long userId = 1L;
@@ -68,32 +68,25 @@ public class PointServiceConcurrencyTest {
 	}
 
 	@Test
-	@DisplayName("2명의 유저를 대상으로 100 포인트를 충전하는 요청을 각 20번 동시 요청하면 두 유저의 포인트는 각 2_000이고 이력도 20개씩 남는다.")
-	public void chargePointConcurrencyTestMultiUser() throws InterruptedException {
+	@DisplayName("2명의 유저를 대상으로 포인트가 0인 유저에게 100 포인트를 충전하는 요청을 각 20번 동시 요청하면 두 유저의 포인트는 각 2_000이고 이력도 20개씩 남는다.")
+	void chargePointConcurrencyTestMultiUser() throws InterruptedException {
 
 		// given
 		long userId1 = 1L;
 		long userId2 = 2L;
-		int threadCount = 20;
+		int threadCount = 40;
 		pointRepository.saveOrUpdate(userId1, 0L);
 		pointRepository.saveOrUpdate(userId2, 0L);
 
-		ExecutorService executorService = Executors.newFixedThreadPool(threadCount * 2);
-		CountDownLatch latch = new CountDownLatch(threadCount * 2);
+		ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+		CountDownLatch latch = new CountDownLatch(threadCount);
 
 		// when
 		for (int i = 0; i < threadCount; i++) {
+			long userId = (i % 2 == 0) ? userId1 : userId2;
 			executorService.submit(() -> {
 				try {
-					pointService.chargePoint(userId1, FIXED_AMOUNT);
-				} finally {
-					latch.countDown();
-				}
-			});
-
-			executorService.submit(() -> {
-				try {
-					pointService.chargePoint(userId2, FIXED_AMOUNT);
+					pointService.chargePoint(userId, FIXED_AMOUNT);
 				} finally {
 					latch.countDown();
 				}
@@ -109,16 +102,16 @@ public class PointServiceConcurrencyTest {
 		List<PointHistory> allHistoryByUserId2 = pointHistoryRepository.findAllHistoryByUserId(userId2);
 
 		assertAll(
-			() -> assertThat(findUser1Point.point()).isEqualTo(FIXED_AMOUNT * threadCount),
-			() -> assertThat(findUser2Point.point()).isEqualTo(FIXED_AMOUNT * threadCount),
-			() -> assertThat(allHistoryByUserId1.size()).isEqualTo(threadCount),
-			() -> assertThat(allHistoryByUserId2.size()).isEqualTo(threadCount)
+			() -> assertThat(findUser1Point.point()).isEqualTo(FIXED_AMOUNT * 20),
+			() -> assertThat(findUser2Point.point()).isEqualTo(FIXED_AMOUNT * 20),
+			() -> assertThat(allHistoryByUserId1.size()).isEqualTo(20),
+			() -> assertThat(allHistoryByUserId2.size()).isEqualTo(20)
 		);
 	}
 
 	@Test
 	@DisplayName("90,000 포인트를 가진 사용자를 대상으로 1,000 포인트를 충전하는 요청이 15개 동시에 들어오면 10개는 성공하고 5개는 IllegalStateException 예외가 발생한다.")
-	public void chargePointConcurrencyExceptionTest() throws InterruptedException {
+	void chargePointConcurrencyExceptionTest() throws InterruptedException {
 		// given
 		long userId = 1L;
 		long initialAmount = 90_000L;
@@ -191,38 +184,33 @@ public class PointServiceConcurrencyTest {
 	}
 
 	@Test
-	@DisplayName("2명의 유저를 대상으로 100 포인트 사용하는 요청을 각 20번 동시 요청하면 두 유저의 포인트는 각 2_000씩 차감되고 이력도 20개씩 남는다.")
+	@DisplayName("2명의 유저를 대상으로 100 포인트 사용하는 요청을 각 20번 동시 요청하면 두 유저의 포인트는 각 2_000씩 차감되어 8_000이되고 이력도 20개씩 남는다.")
 	public void usePointConcurrencyTestMultiUser() throws InterruptedException {
 
 		// given
 		long userId1 = 1L;
 		long userId2 = 2L;
-		int threadCount = 20;
+		int threadCount = 40;
 		long initialAmount = 10_000L;
 		pointRepository.saveOrUpdate(userId1, initialAmount);
 		pointRepository.saveOrUpdate(userId2, initialAmount);
 
-		ExecutorService executorService = Executors.newFixedThreadPool(threadCount * 2);
-		CountDownLatch latch = new CountDownLatch(threadCount * 2);
+		ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+		CountDownLatch latch = new CountDownLatch(threadCount);
 
 		// when
 		for (int i = 0; i < threadCount; i++) {
-			executorService.submit(() -> {
-				try {
-					pointService.usePoint(userId1, FIXED_AMOUNT);
-				} finally {
-					latch.countDown();
-				}
-			});
 
+			long userId = (i % 2 == 0) ? userId1 : userId2;
 			executorService.submit(() -> {
 				try {
-					pointService.usePoint(userId2, FIXED_AMOUNT);
+					pointService.usePoint(userId, FIXED_AMOUNT);
 				} finally {
 					latch.countDown();
 				}
 			});
 		}
+
 		latch.await();
 		executorService.shutdown();
 
@@ -233,10 +221,10 @@ public class PointServiceConcurrencyTest {
 		List<PointHistory> allHistoryByUserId2 = pointHistoryRepository.findAllHistoryByUserId(userId2);
 
 		assertAll(
-			() -> assertThat(findUser1Point.point()).isEqualTo(initialAmount - (FIXED_AMOUNT * threadCount)),
-			() -> assertThat(findUser2Point.point()).isEqualTo(initialAmount - (FIXED_AMOUNT * threadCount)),
-			() -> assertThat(allHistoryByUserId1.size()).isEqualTo(threadCount),
-			() -> assertThat(allHistoryByUserId2.size()).isEqualTo(threadCount)
+			() -> assertThat(findUser1Point.point()).isEqualTo(initialAmount - (FIXED_AMOUNT * 20)),
+			() -> assertThat(findUser2Point.point()).isEqualTo(initialAmount - (FIXED_AMOUNT * 20)),
+			() -> assertThat(allHistoryByUserId1.size()).isEqualTo(20),
+			() -> assertThat(allHistoryByUserId2.size()).isEqualTo(20)
 		);
 	}
 
