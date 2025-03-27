@@ -17,7 +17,7 @@ public class PointService {
 		return pointRepository.findById(id);
 	}
 
-	public UserPoint chargePoint(long id, long amount) {
+	public synchronized UserPoint chargePoint(long id, long amount) {
 		UserPoint findUserPoint = pointRepository.findById(id);
 
 		UserPoint charged = findUserPoint.charge(amount);
@@ -26,7 +26,7 @@ public class PointService {
 		return pointRepository.saveOrUpdate(charged.id(), charged.point());
 	}
 
-	public UserPoint usePoint(long id, long amount) {
+	public synchronized UserPoint usePoint(long id, long amount) {
 		UserPoint findUserPoint = pointRepository.findById(id);
 
 		UserPoint used = findUserPoint.use(amount);
