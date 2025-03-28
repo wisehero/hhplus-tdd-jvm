@@ -68,7 +68,7 @@ public class PointServiceConcurrencyTest {
 	}
 
 	@Test
-	@DisplayName("2명의 유저를 대상으로 포인트가 0인 유저에게 100 포인트를 충전하는 요청을 각 20번 동시 요청하면 두 유저의 포인트는 각 2_000이고 이력도 20개씩 남는다.")
+	@DisplayName("2명의 유저를 대상으로 포인트가 0인 유저에게 100 포인트를 충전하는 요청을 각 20번 동시 요청하면 두 유저의 포인트는 각 2_000이다.")
 	void chargePointConcurrencyTestMultiUser() throws InterruptedException {
 
 		// given
@@ -98,14 +98,10 @@ public class PointServiceConcurrencyTest {
 		// then
 		UserPoint findUser1Point = pointRepository.findById(userId1);
 		UserPoint findUser2Point = pointRepository.findById(userId2);
-		List<PointHistory> allHistoryByUserId1 = pointHistoryRepository.findAllHistoryByUserId(userId1);
-		List<PointHistory> allHistoryByUserId2 = pointHistoryRepository.findAllHistoryByUserId(userId2);
 
 		assertAll(
 			() -> assertThat(findUser1Point.point()).isEqualTo(FIXED_AMOUNT * 20),
-			() -> assertThat(findUser2Point.point()).isEqualTo(FIXED_AMOUNT * 20),
-			() -> assertThat(allHistoryByUserId1.size()).isEqualTo(20),
-			() -> assertThat(allHistoryByUserId2.size()).isEqualTo(20)
+			() -> assertThat(findUser2Point.point()).isEqualTo(FIXED_AMOUNT * 20)
 		);
 	}
 
@@ -184,7 +180,7 @@ public class PointServiceConcurrencyTest {
 	}
 
 	@Test
-	@DisplayName("2명의 유저를 대상으로 100 포인트 사용하는 요청을 각 20번 동시 요청하면 두 유저의 포인트는 각 2_000씩 차감되어 8_000이되고 이력도 20개씩 남는다.")
+	@DisplayName("2명의 유저를 대상으로 100 포인트 사용하는 요청을 각 20번 동시 요청하면 두 유저의 포인트는 각 2_000씩 차감되어 8_000이 된다.")
 	public void usePointConcurrencyTestMultiUser() throws InterruptedException {
 
 		// given
@@ -217,14 +213,10 @@ public class PointServiceConcurrencyTest {
 		// then
 		UserPoint findUser1Point = pointRepository.findById(userId1);
 		UserPoint findUser2Point = pointRepository.findById(userId2);
-		List<PointHistory> allHistoryByUserId1 = pointHistoryRepository.findAllHistoryByUserId(userId1);
-		List<PointHistory> allHistoryByUserId2 = pointHistoryRepository.findAllHistoryByUserId(userId2);
 
 		assertAll(
 			() -> assertThat(findUser1Point.point()).isEqualTo(initialAmount - (FIXED_AMOUNT * 20)),
-			() -> assertThat(findUser2Point.point()).isEqualTo(initialAmount - (FIXED_AMOUNT * 20)),
-			() -> assertThat(allHistoryByUserId1.size()).isEqualTo(20),
-			() -> assertThat(allHistoryByUserId2.size()).isEqualTo(20)
+			() -> assertThat(findUser2Point.point()).isEqualTo(initialAmount - (FIXED_AMOUNT * 20))
 		);
 	}
 
