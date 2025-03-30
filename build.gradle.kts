@@ -23,6 +23,7 @@ dependencyManagement {
 
 dependencies {
     implementation(libs.spring.boot.starter.web)
+    implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-validation") // 이거를 다른것처럼 써봐
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
